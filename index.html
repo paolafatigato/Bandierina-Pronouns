@@ -433,6 +433,13 @@
       </div>
     </div>
 
+    <div style="margin:12px 0 18px;">
+      <div class="filter-label">Numero coppie</div>
+      <div class="team-input-row">
+        <input class="team-input" id="maxStudents" type="number" min="1" placeholder="Es. 9" />
+      </div>
+    </div>
+
     <button class="btn-start" onclick="startGame()">Start! 🚀</button>
   </div>
   <p style="font-size:12px; color:var(--text-muted); text-align:center; padding-bottom:24px;">
@@ -478,7 +485,12 @@
     <button class="btn btn-next btn-disabled" id="btnNext" onclick="nextCard()">
       Next ➜
     </button>
+    <button class="btn" id="btnRandom" onclick="callRandom()">
+      🎲 Call number
+    </button>
   </div>
+
+  <div id="calledNumberDisplay" style="width:100%; text-align:center; font-size:22px; font-weight:700; color:var(--accent); margin-top:8px; min-height:28px;"></div>
 
   <div class="score-row-label" id="scoreRowLabel">Who got it right?</div>
   <div class="score-row" id="scoreRow">
@@ -535,7 +547,34 @@ const ALL_CARDS = [
   { sentence: "In this photo, my cousins are smiling.", subject: "my cousins", pronoun: "They", category: "THEY" },
   { sentence: "In her free time, Alex dances.", subject: "Alex", pronoun: "She", category: "SHE" },
   { sentence: "At the moment, Marco is doing his homework.", subject: "Marco", pronoun: "He", category: "HE" },
-  { sentence: "You and my sister need help.", subject: "You and my sister", pronoun: "You", category: "YOU" }
+  { sentence: "You and my sister need help.", subject: "You and my sister", pronoun: "You", category: "YOU" },
+
+  // ── Complex sentences (subject NOT at the beginning) ──
+  { sentence: "Without me, the team is weak.", subject: "the team", pronoun: "It", category: "IT" },
+  { sentence: "Every afternoon, after the coffee, Lorenzo is very energetic.", subject: "Lorenzo", pronoun: "He", category: "HE" },
+  { sentence: "Before dinner, Sofia always calls her mum.", subject: "Sofia", pronoun: "She", category: "SHE" },
+  { sentence: "On Sundays, my grandparents visit us.", subject: "my grandparents", pronoun: "They", category: "THEY" },
+  { sentence: "After school, my sister and I always eat a snack.", subject: "my sister and I", pronoun: "We", category: "WE" },
+  { sentence: "Every Friday, my dad cooks pasta for everyone.", subject: "my dad", pronoun: "He", category: "HE" },
+  { sentence: "At night, the city is very quiet.", subject: "the city", pronoun: "It", category: "IT" },
+  { sentence: "During the summer, my cousins come to visit.", subject: "my cousins", pronoun: "They", category: "THEY" },
+  { sentence: "Before the test, I always feel nervous.", subject: "I", pronoun: "I", category: "I" },
+  { sentence: "Without their teacher, the students don't know what to do.", subject: "the students", pronoun: "They", category: "THEY" },
+  { sentence: "On cold days, my cat sleeps under the blanket.", subject: "my cat", pronoun: "It", category: "IT" },
+  { sentence: "After the match, the players are exhausted.", subject: "the players", pronoun: "They", category: "THEY" },
+  { sentence: "Every morning, before school, Jake drinks orange juice.", subject: "Jake", pronoun: "He", category: "HE" },
+  { sentence: "On the beach, you and Maria always look very happy.", subject: "you and Maria", pronoun: "You", category: "YOU" },
+  { sentence: "In winter, my brother and I love hot chocolate.", subject: "my brother and I", pronoun: "We", category: "WE" },
+  { sentence: "Without her, the classroom is really boring.", subject: "the classroom", pronoun: "It", category: "IT" },
+  { sentence: "After the rain, the garden smells beautiful.", subject: "the garden", pronoun: "It", category: "IT" },
+  { sentence: "On weekends, I love sleeping late.", subject: "I", pronoun: "I", category: "I" },
+  { sentence: "In the evening, after dinner, Emma reads her book.", subject: "Emma", pronoun: "She", category: "SHE" },
+  { sentence: "After the lesson, my teacher goes to the staffroom.", subject: "my teacher", pronoun: "She", category: "SHE" },
+  { sentence: "Every Sunday, my family and I go to the park.", subject: "my family and I", pronoun: "We", category: "WE" },
+  { sentence: "Without his glasses, Marco can't see anything.", subject: "Marco", pronoun: "He", category: "HE" },
+  { sentence: "In the photo, you and your friends look great.", subject: "you and your friends", pronoun: "You", category: "YOU" },
+  { sentence: "After the concert, the band is very tired.", subject: "the band", pronoun: "It", category: "IT" },
+  { sentence: "On Monday mornings, I never want to wake up.", subject: "I", pronoun: "I", category: "I" }
 ];
 
 let deck = [];
@@ -546,6 +585,7 @@ let answered = false;
 let teamA = "Team A";
 let teamB = "Team B";
 let selectedFilter = "ALL";
+let maxStudents = 0;
 
 // ── filter chips ──
 document.querySelectorAll('#filterChips .chip').forEach(chip => {
@@ -576,6 +616,8 @@ function startGame() {
   if (deck.length === 0) { alert("No cards found for this filter!"); return; }
 
   scoreA = 0; scoreB = 0; current = 0; answered = false;
+  const maxInput = document.getElementById('maxStudents');
+  maxStudents = maxInput ? parseInt(maxInput.value, 10) || 0 : 0;
 
   document.getElementById('labelA').textContent = teamA;
   document.getElementById('labelB').textContent = teamB;
@@ -646,6 +688,24 @@ function revealAnswer() {
   // Highlight subject automatically
   const subjectEl = document.querySelector('.subject');
   if (subjectEl) subjectEl.classList.add('revealed');
+}
+
+function callRandom() {
+  const max = maxStudents || (document.getElementById('maxStudents') && parseInt(document.getElementById('maxStudents').value, 10)) || 0;
+  if (!max || max < 1) {
+    alert('Inserisci il numero totale di alunni (>=1) nel campo "Numero alunni" prima di chiamare.');
+    return;
+  }
+  const n = Math.floor(Math.random() * max) + 1;
+  const display = document.getElementById('calledNumberDisplay');
+  if (display) {
+    display.textContent = 'Chiamato: ' + n;
+    display.style.opacity = '1';
+    display.style.transform = 'scale(1.02)';
+    setTimeout(() => { display.style.transform = ''; }, 250);
+  } else {
+    alert('Chiamato: ' + n);
+  }
 }
 
 function addPoint(team) {
