@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="logo.png" sizes="192x192">
+<link rel="apple-touch-icon" href="logo.png">
+<meta name="theme-color" content="#7F77DD">
+<title>🏁 Flag Game – Personal Pronouns</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --team-a: #1D9E75;
+    --team-b: #D85A30;
+    --bg: #f7f5f0;
+    --card: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #6b6b6b;
+    --border: rgba(0,0,0,0.10);
+    --shadow: 0 4px 24px rgba(0,0,0,0.10);
+    --radius: 18px;
+    --accent: #7F77DD;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    overscroll-behavior: none;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    width: 100%;
+    max-width: 480px;
+    padding: 20px 20px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .header h1 span { color: var(--accent); }
+
+  .score-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .score-a { color: var(--team-a); }
+  .score-b { color: var(--team-b); }
+  .score-sep { color: var(--text-muted); font-size: 14px; }
+
+  /* ── PROGRESS ── */
+  .progress-wrap {
+    width: 100%;
+    max-width: 480px;
+    padding: 0 20px 6px;
+  }
+  .progress-bar-bg {
+    height: 5px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 99px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: right;
+    margin-top: 4px;
+  }
+
+  /* ── MAIN CARD ── */
+  .card {
+    width: calc(100% - 32px);
+    max-width: 448px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 32px 28px 28px;
+    margin: 10px 0 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    border: 1.5px solid var(--border);
+  }
+
+  .category-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 99px;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+  }
+
+  .sentence-area {
+    text-align: center;
+    line-height: 1.65;
+  }
+
+  .sentence-text {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  /* subject highlight */
+  .subject {
+    display: inline;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    transition: background 0.25s, border-color 0.25s;
+    border-radius: 4px;
+    padding: 0 2px;
+  }
+  .subject.revealed {
+    background: #EEF0FF;
+    border-bottom-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .tap-hint {
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .tap-hint::before { content: "👆"; }
+
+  /* answer reveal */
+  .answer-box {
+    width: 100%;
+    border-radius: 12px;
+    background: #F0FAF5;
+    border: 1.5px solid #9FE1CB;
+    padding: 16px 20px;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+  }
+  .answer-box.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .answer-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #0F6E56;
+    margin-bottom: 4px;
+  }
+  .answer-pronoun {
+    font-size: 34px;
+    font-weight: 700;
+    color: #085041;
+  }
+
+  /* ── BUTTONS ── */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 448px;
+    padding: 0 16px;
+  }
+
+  .btn {
+    flex: 1;
+    padding: 15px 8px;
+    border-radius: 14px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.12s, box-shadow 0.12s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn:active { transform: scale(0.96); }
+
+  .btn-reveal {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 4px 14px rgba(127,119,221,0.35);
+  }
+  .btn-reveal:active { box-shadow: none; }
+
+  .btn-next {
+    background: var(--text);
+    color: white;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  }
+  .btn-next:active { box-shadow: none; }
+
+  .btn-disabled {
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  /* ── SCORE BUTTONS ── */
+  .score-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    max-width: 448px;
+    padding: 0 16px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .score-row.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .btn-score {
+    flex: 1;
+    padding: 11px 8px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s;
+  }
+  .btn-score:active { transform: scale(0.95); }
+  .btn-score-a {
+    background: #E1F5EE;
+    color: #085041;
+    border: 1.5px solid #9FE1CB;
+  }
+  .btn-score-b {
+    background: #FAECE7;
+    color: #4A1B0C;
+    border: 1.5px solid #F5C4B3;
+  }
+  .score-row-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    width: 100%;
+    max-width: 448px;
+    padding: 0 16px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .score-row-label.show { opacity: 1; }
+
+  /* ── TEAM SETUP ── */
+  .team-setup {
+    width: calc(100% - 32px);
+    max-width: 448px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    margin: 10px 0 16px;
+  }
+  .team-setup h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+  .team-input-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .team-input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    font-size: 15px;
+    background: #f9f9f9;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .team-input:focus { border-color: var(--accent); }
+  .team-input.a { border-left: 4px solid var(--team-a); }
+  .team-input.b { border-left: 4px solid var(--team-b); }
+
+  .filter-section {
+    margin: 14px 0 18px;
+  }
+  .filter-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .chip {
+    padding: 6px 13px;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1.5px solid var(--border);
+    background: var(--bg);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  .btn-start {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    background: var(--accent);
+    color: white;
+    font-size: 18px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(127,119,221,0.35);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 0.12s;
+  }
+  .btn-start:active { transform: scale(0.97); }
+
+  /* ── END SCREEN ── */
+  .end-screen {
+    width: calc(100% - 32px);
+    max-width: 448px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 36px 28px;
+    text-align: center;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    margin: 20px 0;
+  }
+  .end-trophy { font-size: 56px; margin-bottom: 12px; }
+  .end-winner { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .end-scores { font-size: 16px; color: var(--text-muted); margin-bottom: 24px; }
+  .btn-restart {
+    width: 100%;
+    padding: 15px;
+    border-radius: 14px;
+    background: var(--text);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ── HIDDEN ── */
+  .hidden { display: none !important; }
+
+  /* flag emoji pulse on correct answer */
+  @keyframes flagWave {
+    0%,100% { transform: rotate(-5deg) scale(1.1); }
+    50% { transform: rotate(8deg) scale(1.2); }
+  }
+  .flag-pulse { animation: flagWave 0.4s ease 2; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SETUP SCREEN ═══════════════ -->
+<div id="setupScreen">
+  <div class="header" style="justify-content:center; padding-top:28px;">
+    <img src="logo.png" alt="Flag Game logo" style="width:36px;height:36px;border-radius:8px;margin-right:8px;">
+    <h1>🏁 Flag <span>Game</span></h1>
+  </div>
+  <div class="team-setup">
+    <h2>Set up the teams</h2>
+    <div class="team-input-row">
+      <input class="team-input a" id="teamAName" type="text" placeholder="Team A" value="Team A" maxlength="12">
+      <input class="team-input b" id="teamBName" type="text" placeholder="Team B" value="Team B" maxlength="12">
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-label">Filter by pronoun</div>
+      <div class="filter-chips" id="filterChips">
+        <div class="chip active" data-pronoun="ALL">All</div>
+        <div class="chip" data-pronoun="I">I</div>
+        <div class="chip" data-pronoun="HE">He</div>
+        <div class="chip" data-pronoun="SHE">She</div>
+        <div class="chip" data-pronoun="IT">It</div>
+        <div class="chip" data-pronoun="WE">We</div>
+        <div class="chip" data-pronoun="YOU">You</div>
+        <div class="chip" data-pronoun="THEY">They</div>
+      </div>
+    </div>
+
+    <button class="btn-start" onclick="startGame()">Start! 🚀</button>
+  </div>
+  <p style="font-size:12px; color:var(--text-muted); text-align:center; padding-bottom:24px;">
+    Read the sentence aloud · call a number · tap to reveal the answer
+  </p>
+</div>
+
+<!-- ═══════════════ GAME SCREEN ═══════════════ -->
+  <div id="gameScreen" class="hidden">
+  <div class="header">
+    <img src="logo.png" alt="Flag Game logo" style="width:36px;height:36px;border-radius:8px;margin-right:8px;">
+    <h1>🏁 Flag <span>Game</span></h1>
+    <div class="score-bar">
+      <span class="score-a" id="scoreA">0</span>
+      <span class="score-sep">–</span>
+      <span class="score-b" id="scoreB">0</span>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label" id="progressLabel">1 / 10</div>
+  </div>
+
+  <div class="card" id="mainCard">
+    <div class="category-badge" id="categoryBadge">Personal Pronouns</div>
+
+    <div class="sentence-area">
+      <p class="sentence-text" id="sentenceText"></p>
+    </div>
+    <div class="tap-hint" id="tapHint">Tap the underlined subject to highlight it</div>
+
+    <div class="answer-box" id="answerBox">
+      <div class="answer-label">Subject pronoun →</div>
+      <div class="answer-pronoun" id="answerPronoun"></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-reveal" id="btnReveal" onclick="revealAnswer()">
+      👁 Reveal answer
+    </button>
+    <button class="btn btn-next btn-disabled" id="btnNext" onclick="nextCard()">
+      Next ➜
+    </button>
+  </div>
+
+  <div class="score-row-label" id="scoreRowLabel">Who got it right?</div>
+  <div class="score-row" id="scoreRow">
+    <button class="btn-score btn-score-a" id="btnScoreA" onclick="addPoint('A')">✅ <span id="labelA">Team A</span></button>
+    <button class="btn-score btn-score-b" id="btnScoreB" onclick="addPoint('B')">✅ <span id="labelB">Team B</span></button>
+  </div>
+
+  <div style="height: 24px;"></div>
+</div>
+
+<!-- ═══════════════ END SCREEN ═══════════════ -->
+<div id="endScreen" class="hidden">
+  <div class="header" style="justify-content:center; padding-top:28px;">
+    <img src="logo.png" alt="Flag Game logo" style="width:36px;height:36px;border-radius:8px;margin-right:8px;">
+    <h1>🏁 Flag <span>Game</span></h1>
+  </div>
+  <div class="end-screen">
+    <div class="end-trophy" id="endTrophy">🏆</div>
+    <div class="end-winner" id="endWinner"></div>
+    <div class="end-scores" id="endScores"></div>
+    <button class="btn-restart" onclick="restart()">🔄 Play again</button>
+  </div>
+</div>
+
+<script>
+const ALL_CARDS = [
+  { sentence: "My sister reads a lot.", subject: "My sister", pronoun: "She", category: "SHE" },
+  { sentence: "Tom plays football.", subject: "Tom", pronoun: "He", category: "HE" },
+  { sentence: "My parents are at work.", subject: "My parents", pronoun: "They", category: "THEY" },
+  { sentence: "The cat is on the sofa.", subject: "The cat", pronoun: "It", category: "IT" },
+  { sentence: "Luca and I go to school.", subject: "Luca and I", pronoun: "We", category: "WE" },
+  { sentence: "You and Anna are friends.", subject: "You and Anna", pronoun: "You", category: "YOU" },
+  { sentence: "I have a red bike.", subject: "I", pronoun: "I", category: "I" },
+  { sentence: "In the afternoon, my sister studies.", subject: "my sister", pronoun: "She", category: "SHE" },
+  { sentence: "The book is interesting.", subject: "The book", pronoun: "It", category: "IT" },
+  { sentence: "My brothers play video games.", subject: "My brothers", pronoun: "They", category: "THEY" },
+  { sentence: "Sara sings very well.", subject: "Sara", pronoun: "She", category: "SHE" },
+  { sentence: "Marco is in class 1B.", subject: "Marco", pronoun: "He", category: "HE" },
+  { sentence: "After school, Tom goes to the park.", subject: "Tom", pronoun: "He", category: "HE" },
+  { sentence: "You are a good student.", subject: "You", pronoun: "You", category: "YOU" },
+  { sentence: "My dog is very funny.", subject: "My dog", pronoun: "It", category: "IT" },
+  { sentence: "My mum and dad love pizza.", subject: "My mum and dad", pronoun: "They", category: "THEY" },
+  { sentence: "Anna and I speak English.", subject: "Anna and I", pronoun: "We", category: "WE" },
+  { sentence: "The students are in the classroom.", subject: "The students", pronoun: "They", category: "THEY" },
+  { sentence: "My grandma cooks very well.", subject: "My grandma", pronoun: "She", category: "SHE" },
+  { sentence: "Peter and John play the guitar.", subject: "Peter and John", pronoun: "They", category: "THEY" },
+  { sentence: "The dog loves running.", subject: "The dog", pronoun: "It", category: "IT" },
+  { sentence: "My little brother cries a lot.", subject: "My little brother", pronoun: "He", category: "HE" },
+  { sentence: "Anna and I are tired today.", subject: "Anna and I", pronoun: "We", category: "WE" },
+  { sentence: "You always help your friends.", subject: "You", pronoun: "You", category: "YOU" },
+  { sentence: "In the morning, I drink milk.", subject: "I", pronoun: "I", category: "I" },
+  { sentence: "At home, my parents speak Italian.", subject: "my parents", pronoun: "They", category: "THEY" },
+  { sentence: "Every weekend, Anna and I play volleyball.", subject: "Anna and I", pronoun: "We", category: "WE" },
+  { sentence: "In this photo, my cousins are smiling.", subject: "my cousins", pronoun: "They", category: "THEY" },
+  { sentence: "In her free time, Alex dances.", subject: "Alex", pronoun: "She", category: "SHE" },
+  { sentence: "At the moment, Marco is doing his homework.", subject: "Marco", pronoun: "He", category: "HE" },
+  { sentence: "You and my sister need help.", subject: "You and my sister", pronoun: "You", category: "YOU" }
+];
+
+let deck = [];
+let current = 0;
+let scoreA = 0;
+let scoreB = 0;
+let answered = false;
+let teamA = "Team A";
+let teamB = "Team B";
+let selectedFilter = "ALL";
+
+// ── filter chips ──
+document.querySelectorAll('#filterChips .chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('#filterChips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    selectedFilter = chip.dataset.pronoun;
+  });
+});
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  teamA = document.getElementById('teamAName').value.trim() || "Team A";
+  teamB = document.getElementById('teamBName').value.trim() || "Team B";
+
+  deck = selectedFilter === "ALL"
+    ? shuffle(ALL_CARDS)
+    : shuffle(ALL_CARDS.filter(c => c.category === selectedFilter));
+
+  if (deck.length === 0) { alert("No cards found for this filter!"); return; }
+
+  scoreA = 0; scoreB = 0; current = 0; answered = false;
+
+  document.getElementById('labelA').textContent = teamA;
+  document.getElementById('labelB').textContent = teamB;
+  document.getElementById('scoreA').textContent = scoreA;
+  document.getElementById('scoreB').textContent = scoreB;
+
+  document.getElementById('setupScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.add('hidden');
+  document.getElementById('gameScreen').classList.remove('hidden');
+
+  loadCard();
+}
+
+function loadCard() {
+  answered = false;
+  const card = deck[current];
+
+  // Build sentence with clickable subject
+  const raw = card.sentence;
+  const sub = card.subject;
+  const idx = raw.toLowerCase().indexOf(sub.toLowerCase());
+  let html = raw;
+  if (idx !== -1) {
+    const actual = raw.substring(idx, idx + sub.length);
+    html = raw.substring(0, idx) +
+      `<span class="subject" onclick="highlightSubject(this)">${actual}</span>` +
+      raw.substring(idx + sub.length);
+  }
+  document.getElementById('sentenceText').innerHTML = html;
+
+  // Badge
+  document.getElementById('categoryBadge').textContent =
+    "👤 Subject pronoun";
+
+  // Answer box
+  const ab = document.getElementById('answerBox');
+  ab.classList.remove('show');
+  document.getElementById('answerPronoun').textContent = card.pronoun;
+
+  // Buttons
+  document.getElementById('btnReveal').classList.remove('btn-disabled');
+  document.getElementById('btnNext').classList.add('btn-disabled');
+  document.getElementById('scoreRow').classList.remove('show');
+  document.getElementById('scoreRowLabel').classList.remove('show');
+  document.getElementById('tapHint').style.opacity = "1";
+
+  // Progress
+  const pct = Math.round((current / deck.length) * 100);
+  document.getElementById('progressFill').style.width = pct + "%";
+  document.getElementById('progressLabel').textContent = (current + 1) + " / " + deck.length;
+}
+
+function highlightSubject(el) {
+  el.classList.toggle('revealed');
+}
+
+function revealAnswer() {
+  if (answered) return;
+  answered = true;
+
+  document.getElementById('answerBox').classList.add('show');
+  document.getElementById('btnReveal').classList.add('btn-disabled');
+  document.getElementById('btnNext').classList.remove('btn-disabled');
+  document.getElementById('scoreRow').classList.add('show');
+  document.getElementById('scoreRowLabel').classList.add('show');
+  document.getElementById('tapHint').style.opacity = "0";
+
+  // Highlight subject automatically
+  const subjectEl = document.querySelector('.subject');
+  if (subjectEl) subjectEl.classList.add('revealed');
+}
+
+function addPoint(team) {
+  if (team === 'A') {
+    scoreA++;
+    document.getElementById('scoreA').textContent = scoreA;
+    document.getElementById('btnScoreA').classList.add('flag-pulse');
+    setTimeout(() => document.getElementById('btnScoreA').classList.remove('flag-pulse'), 900);
+  } else {
+    scoreB++;
+    document.getElementById('scoreB').textContent = scoreB;
+    document.getElementById('btnScoreB').classList.add('flag-pulse');
+    setTimeout(() => document.getElementById('btnScoreB').classList.remove('flag-pulse'), 900);
+  }
+}
+
+function nextCard() {
+  current++;
+  if (current >= deck.length) {
+    showEnd();
+  } else {
+    loadCard();
+  }
+}
+
+function showEnd() {
+  document.getElementById('gameScreen').classList.add('hidden');
+  document.getElementById('endScreen').classList.remove('hidden');
+
+  let trophy = "🏁";
+  let winner = "";
+  if (scoreA > scoreB) {
+    trophy = "🏆"; winner = teamA + " wins!";
+  } else if (scoreB > scoreA) {
+    trophy = "🏆"; winner = teamB + " wins!";
+  } else {
+    trophy = "🤝"; winner = "It's a tie!";
+  }
+
+  document.getElementById('endTrophy').textContent = trophy;
+  document.getElementById('endWinner').textContent = winner;
+  document.getElementById('endScores').textContent =
+    teamA + " " + scoreA + " – " + scoreB + " " + teamB;
+}
+
+function restart() {
+  document.getElementById('endScreen').classList.add('hidden');
+  document.getElementById('setupScreen').classList.remove('hidden');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "Flag Game – Personal Pronouns",
+  "short_name": "Flag Game",
+  "description": "A small game for practicing subject pronouns.",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f7f5f0",
+  "theme_color": "#7F77DD"
+}
